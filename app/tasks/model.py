@@ -1,9 +1,18 @@
+import enum
 from datetime import UTC, datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
+
+
+class PriorityTier(str, enum.Enum):
+    S = "S"
+    A = "A"
+    B = "B"
+    C = "C"
+    D = "D"
 
 
 class Task(Base):
@@ -16,6 +25,9 @@ class Task(Base):
         ForeignKey("users.id"), nullable=False, index=True
     )
     is_done: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    priority: Mapped[PriorityTier | None] = mapped_column(
+        Enum(PriorityTier), default=None, nullable=False
+    )
     create_time: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC)
     )

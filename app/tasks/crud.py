@@ -3,13 +3,16 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.tasks.model import Task
+from app.tasks.model import PriorityTier, Task
 from app.tasks.schemas import TaskCreate, TaskUpdate
 
 
 async def create_task(db: AsyncSession, task_data: TaskCreate, user_id: int) -> Task:
     task = Task(
-        title=task_data.title, description=task_data.description, user_id=user_id
+        title=task_data.title,
+        description=task_data.description,
+        priority=task_data.priority,
+        user_id=user_id,
     )
 
     db.add(task)
@@ -60,6 +63,7 @@ async def get_tasks_by_user(
     skip: int = 0,
     limit: int = 100,
     is_done: bool | None = None,
+    priority: PriorityTier | None = None,
 ) -> list[Task]:
     result = await db.execute(
         select(Task)
@@ -72,6 +76,8 @@ async def get_tasks_by_user(
     query = select(Task).where(Task.user_id == user_id)
     if is_done is not None:
         query = query.where(Task.is_done == is_done)
+    if priority is not None:
+        query = query.where(Task.priority == priority)
     query = query.offset(skip).limit(limit)
     result = await db.execute(query)
 

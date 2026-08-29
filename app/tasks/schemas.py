@@ -2,6 +2,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.tasks.model import PriorityTier
+
 
 class TaskBase(BaseModel):
     title: str = Field(min_length=1, max_length=100)
@@ -9,7 +11,7 @@ class TaskBase(BaseModel):
 
 
 class TaskCreate(TaskBase):
-    pass
+    priority: PriorityTier | None = None
 
 
 class TaskUpdate(BaseModel):
@@ -26,5 +28,6 @@ class TaskResponse(BaseModel):
     description: str | None
     user_id: int
     is_done: bool
+    priority: PriorityTier | None
     create_time: datetime
     done_time: datetime | None

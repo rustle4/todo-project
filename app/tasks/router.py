@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.jwt_hash import CurrentUser
 from app.tasks import crud
+from app.tasks.model import PriorityTier
 from app.tasks.schemas import TaskCreate, TaskResponse, TaskUpdate
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
@@ -47,9 +48,15 @@ async def get_all_tasks(
     skip: int = 0,
     limit: int = 100,
     is_done: bool | None = None,
+    priority: PriorityTier | None = None,
 ) -> list[TaskResponse]:
     all_tasks = await crud.get_tasks_by_user(
-        db, user_id=current_user.id, skip=skip, limit=limit, is_done=is_done
+        db,
+        user_id=current_user.id,
+        skip=skip,
+        limit=limit,
+        is_done=is_done,
+        priority=priority,
     )
 
     return all_tasks
