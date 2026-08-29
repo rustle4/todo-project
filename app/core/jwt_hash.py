@@ -1,20 +1,20 @@
 from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
-from database import get_db
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2AuthorizationCodeBearer
+from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from pwdlib import PasswordHash
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
+from app.core.database import get_db
 from app.users.model import User
-from config import settings
 
 pwd_context = PasswordHash.recommended()
 
-oauth2_scheme = OAuth2AuthorizationCodeBearer(tokenUrl="api/users/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/users/token")
 
 
 def get_password_hash(password: str) -> str:
@@ -77,3 +77,6 @@ async def get_current_user(
         raise credentials_exeption
 
     return user
+
+
+CurrentUser = Annotated[User, Depends(get_current_user)]
