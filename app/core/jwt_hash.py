@@ -14,7 +14,7 @@ from app.users.model import User
 
 pwd_context = PasswordHash.recommended()
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/users/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="users/token")
 
 
 def get_password_hash(password: str) -> str:

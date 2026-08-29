@@ -1,23 +1,21 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.jwt_hash import get_password_hash
+from app.core.jwt_hash import (
+    CurrentUser,
+    create_access_token,
+    get_password_hash,
+    verify_password,
+)
 from app.users import crud, model
 from app.users.schemas import UserCreate, UserPrivate, UserPublic
 
 router = APIRouter(prefix="/users", tags=["users"])
-
-
-@router.get("/{user_id}", response_model=UserPublic)
-async def get_user(user_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
-    user = await crud.get_user_by_id(db, user_id)
-    if user:
-        return user
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
 
 @router.post("", response_model=UserPrivate, status_code=status.HTTP_201_CREATED)
@@ -52,3 +50,42 @@ async def create_user(user: UserCreate, db: Annotated[AsyncSession, Depends(get_
     await db.commit()
     await db.refresh(new_user)
     return new_user
+
+
+@router.get("/me", response_model=UserPrivate)
+async def get_current_user(current_user: CurrentUser):
+    return current_user
+
+
+@router.get("/{user_id}", response_model=UserPublic)
+async def get_user(user_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
+    user = await crud.get_user_by_id(db, user_id)
+    if user:
+        return user
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+
+@router.post("/token")
+async def login_with_token(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    result = await db.execute(
+        select(model.User).where(
+            func.lower(model.User.username) == form_data.username.lower()
+        )
+    )
+    user = result.scalar_one_or_none()
+
+    if user is None or not verify_password(form_data.password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    access_token = create_access_token(
+        data={"sub": str(user.id), "username": user.username}
+    )
+
+    return {"access_token": access_token, "token_type": "bearer"}
