@@ -34,3 +34,4 @@ class Task(Base):
     done_time: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True, default=None
     )
+
