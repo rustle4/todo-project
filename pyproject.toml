@@ -7,9 +7,12 @@ dependencies = [
     "asyncpg>=0.31.0",
     "bcrypt>=5.0.0",
     "fastapi[standard]>=0.141.1",
+    "jwt>=1.4.0",
     "passlib>=1.7.4",
     "psycopg2-binary>=2.9.12",
     "pwdlib[argon2]>=0.3.1",
     "pydantic-settings>=2.15.0",
+    "python-jose[cryptography]>=3.5.0",
+    "python-multipart>=0.0.32",
     "sqlalchemy>=2.0.52",
 ]
