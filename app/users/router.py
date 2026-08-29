@@ -19,18 +19,18 @@ router = APIRouter()
 
 @router.post("", response_model=UserPrivate, status_code=status.HTTP_201_CREATED)
 async def create_user(user: UserCreate, db: Annotated[AsyncSession, Depends(get_db)]):
-    existing_user = await crud.get_user_by_username(db.user.username)
+    existing_user = await crud.get_user_by_username(db, user.username)
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Username already exists",
         )
 
-    existing_email = await crud.get_user_by_email(db.user.username)
+    existing_email = await crud.get_user_by_email(db, user.username)
     if existing_email:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registrated",
+            detail="Email already registered",
         )
 
     hashed_password = get_password_hash(user.password)
