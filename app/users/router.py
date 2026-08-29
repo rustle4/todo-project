@@ -2,7 +2,6 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -12,7 +11,7 @@ from app.core.jwt_hash import (
     get_password_hash,
     verify_password,
 )
-from app.users import crud, model
+from app.users import crud
 from app.users.schemas import UserCreate, UserPrivate, UserPublic
 
 router = APIRouter()
@@ -20,49 +19,24 @@ router = APIRouter()
 
 @router.post("", response_model=UserPrivate, status_code=status.HTTP_201_CREATED)
 async def create_user(user: UserCreate, db: Annotated[AsyncSession, Depends(get_db)]):
-    result = await db.execute(
-        select(model.User.username).where(
-            func.lower(model.User.username) == user.username.lower()
-        )
-    )
-    existing_user = result.scalars().first()
+    existing_user = await crud.get_user_by_username(db.user.username)
     if existing_user:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Username already exists"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username already exists",
         )
 
-    result = await db.execute(
-        select(model.User.email).where(
-            func.lower(model.User.email) == user.email.lower()
-        )
-    )
-    existing_email = result.scalars().first()
+    existing_email = await crud.get_user_by_email(db.user.username)
     if existing_email:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registrated"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registrated",
         )
-    new_user = model.User(
-        username=user.username,
-        email=user.email.lower(),
-        password_hash=get_password_hash(user.password),
-    )
-    db.add(new_user)
-    await db.commit()
-    await db.refresh(new_user)
+
+    hashed_password = get_password_hash(user.password)
+    new_user = await crud.create_user(db, user, hashed_password)
+
     return new_user
-
-
-@router.get("/me", response_model=UserPrivate)
-async def get_current_user(current_user: CurrentUser):
-    return current_user
-
-
-@router.get("/{user_id}", response_model=UserPublic)
-async def get_user(user_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
-    user = await crud.get_user_by_id(db, user_id)
-    if user:
-        return user
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
 
 @router.post("/token")
@@ -70,12 +44,7 @@ async def login_with_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    result = await db.execute(
-        select(model.User).where(
-            func.lower(model.User.username) == form_data.username.lower()
-        )
-    )
-    user = result.scalar_one_or_none()
+    user = await crud.get_user_by_username(db, form_data.username)
 
     if user is None or not verify_password(form_data.password, user.password_hash):
         raise HTTPException(
@@ -89,3 +58,16 @@ async def login_with_token(
     )
 
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.get("/{user_id}", response_model=UserPublic)
+async def get_user(user_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
+    user = await crud.get_user_by_id(db, user_id)
+    if user:
+        return user
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+
+@router.get("/me", response_model=UserPrivate)
+async def get_current_user(current_user: CurrentUser):
+    return current_user
