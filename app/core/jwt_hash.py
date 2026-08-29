@@ -1,14 +1,20 @@
-import hashlib
-import secrets
 from datetime import UTC, datetime, timedelta
-from typing import cast
+from typing import Annotated
 
+from database import get_db
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2AuthorizationCodeBearer
 from jose import JWTError, jwt
 from pwdlib import PasswordHash
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-import config
+from app.users.model import User
+from config import settings
 
 pwd_context = PasswordHash.recommended()
+
+oauth2_scheme = OAuth2AuthorizationCodeBearer(tokenUrl="api/users/token")
 
 
 def get_password_hash(password: str) -> str:
@@ -19,28 +25,55 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 
-def generate_reset_token() -> str:
-    return secrets.token_urlsafe(32)
-
-
-def hash_reset_token(token: str) -> str:
-    return hashlib.sha256(token.encode()).hexdigest()
-
-
-def create_access_token(data: dict, expires_delta: timedelta | None = None):
+def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     to_encode = data.copy()
-    expire = datetime.now(UTC) + (
-        expires_delta or timedelta(minutes=config.ACCESS_TOKEN_EXPIRE_MINUTES)
-    )
+    if expires_delta:
+        expire = datetime.now(UTC) + expires_delta
+    else:
+        expire = datetime.now(UTC) + timedelta(
+            minutes=settings.ACCESS_TOKEN_EXPIRES_MINUTES
+        )
     to_encode.update({"exp": expire})
-    secret_key = cast(str, config.SECRET_KEY)
-    return jwt.encode(to_encode, secret_key, algorithm=config.ALGORITHM)
+    encoded_jwt = jwt.encode(
+        to_encode,
+        settings.SECRET_KEY,
+        algorithm=settings.ALGORITHM,
+    )
+    return encoded_jwt
 
 
-def decode_access_token(token: str):
+async def get_current_user(
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> User:
+    credentials_exeption = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Credentials exeption",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
     try:
-        secret_key = cast(str, config.SECRET_KEY)
-        payload = jwt.decode(token, secret_key, algorithms=[config.ALGORITHM])
-        return payload
+        payload = jwt.decode(
+            token,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM],
+            options={"require": ["exp", "sub"]},
+        )
+        user_id = payload.get("sub")
+        if user_id is None:
+            raise credentials_exeption
     except JWTError:
-        return None
+        raise credentials_exeption
+
+    try:
+        user_id_int = int(user_id)
+    except TypeError, ValueError:
+        raise credentials_exeption
+
+    result = await db.execute(select(User).where(User.id == user_id_int))
+    user = result.scalars().first()
+
+    if not user:
+        raise credentials_exeption
+
+    return user
