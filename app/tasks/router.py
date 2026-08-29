@@ -8,7 +8,7 @@ from app.core.jwt_hash import CurrentUser
 from app.tasks import crud
 from app.tasks.schemas import TaskCreate, TaskResponse, TaskUpdate
 
-router = APIRouter()
+router = APIRouter(prefix="/tasks", tags=["tasks"])
 
 
 @router.post("", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
@@ -17,11 +17,6 @@ async def create_task(
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: CurrentUser,
 ):
-    existing_task = await crud.get_task_by_id(db, task.title)
-    if existing_task:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Task already exists"
-        )
 
     new_task = await crud.create_task(db, task, current_user.id)
 
