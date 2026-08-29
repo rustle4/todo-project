@@ -14,7 +14,7 @@ from app.core.jwt_hash import (
 from app.users import crud
 from app.users.schemas import UserCreate, UserPrivate, UserPublic
 
-router = APIRouter()
+router = APIRouter(prefix="/users", tags=["users"])
 
 
 @router.post("", response_model=UserPrivate, status_code=status.HTTP_201_CREATED)
