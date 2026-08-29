@@ -46,7 +46,7 @@ async def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> User:
-    credentials_exeption = HTTPException(
+    credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Credentials exeption",
         headers={"WWW-Authenticate": "Bearer"},
@@ -61,20 +61,20 @@ async def get_current_user(
         )
         user_id = payload.get("sub")
         if user_id is None:
-            raise credentials_exeption
+            raise credentials_exception
     except JWTError:
-        raise credentials_exeption
+        raise credentials_exception
 
     try:
         user_id_int = int(user_id)
     except TypeError, ValueError:
-        raise credentials_exeption
+        raise credentials_exception
 
     result = await db.execute(select(User).where(User.id == user_id_int))
     user = result.scalars().first()
 
     if not user:
-        raise credentials_exeption
+        raise credentials_exception
 
     return user
 
