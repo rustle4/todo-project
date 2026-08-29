@@ -26,12 +26,12 @@ class Task(Base):
     )
     is_done: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     priority: Mapped[PriorityTier | None] = mapped_column(
-        Enum(PriorityTier), default=None, nullable=False
+        Enum(PriorityTier), default=None, nullable=True
     )
+    deadline_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     create_time: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC)
     )
     done_time: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True, default=None
     )
-

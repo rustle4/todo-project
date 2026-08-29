@@ -12,12 +12,14 @@ class TaskBase(BaseModel):
 
 class TaskCreate(TaskBase):
     priority: PriorityTier | None = None
+    deadline_date: datetime | None = None
 
 
 class TaskUpdate(BaseModel):
     title: str = Field(default=None, min_length=1, max_length=100)
     description: str | None = None
     is_done: bool | None = None
+    deadline_date: datetime | None = None
 
 
 class TaskResponse(BaseModel):
@@ -29,5 +31,6 @@ class TaskResponse(BaseModel):
     user_id: int
     is_done: bool
     priority: PriorityTier | None
+    deadline_date: datetime | None = None
     create_time: datetime
     done_time: datetime | None
