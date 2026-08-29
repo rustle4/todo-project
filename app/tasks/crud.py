@@ -21,6 +21,33 @@ async def create_task(
     return task
 
 
+async def update_task(
+    db: AsyncSession,
+    task_id: int,
+    task_data: TaskUpdate,
+    user_id: int,
+) -> model.Task | None:
+    task = await get_task_by_id(db, task_id, user_id)
+
+    if task is None:
+        return None
+
+    update_data = task_data.model_dump(exclude_unset=True)
+
+    if "is_done" in update_data:
+        task.is_done = update_data["is_done"]
+        task.done_time = datetime.now(UTC) if task.is_done else None
+        del update_data["is_done"]
+
+    for field, value in update_data.items():
+        setattr(task, field, value)
+
+    await db.commit()
+    await db.refresh(task)
+
+    return task
+
+
 async def get_task_by_id(
     db: AsyncSession, user_id: int, task_id: int
 ) -> model.Task | None:
@@ -45,30 +72,6 @@ async def get_tasks_by_user(
     )
 
     return result.scalars().all()
-
-
-async def update_task(
-    db: AsyncSession, task_id: int, task_data: TaskUpdate, user_id: int
-) -> model.Task | None:
-    task = await get_task_by_id(db, task_id, user_id)
-
-    if task is None:
-        return None
-
-    update_data = task_data.model_dump(exclude_unset=True)
-
-    if "is_done" in update_data:
-        task.is_done = update_data["is_done"]
-        task.done_time = datetime.now(UTC) if task.is_done else None
-        del update_data["is_done"]
-
-    for field, value in update_data.items():
-        setattr(task, field, value)
-
-    await db.commit()
-    await db.refresh(task)
-
-    return task
 
 
 async def delete_task(db: AsyncSession, task_id: int, user_id: int) -> bool:
