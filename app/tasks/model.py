@@ -28,7 +28,9 @@ class Task(Base):
     priority: Mapped[PriorityTier | None] = mapped_column(
         Enum(PriorityTier), default=None, nullable=True
     )
-    deadline_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    deadline_date: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=False), nullable=True
+    )
     create_time: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC)
     )

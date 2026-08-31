@@ -7,11 +7,22 @@ from app.tasks.model import PriorityTier, Task
 from app.tasks.schemas import TaskCreate, TaskUpdate
 
 
+def naive_utc(dt: datetime | None) -> datetime | None:
+    if dt is None:
+        return None
+    if dt.tzinfo is not None:
+        return dt.replace(tzinfo=None)
+    return dt
+
+
 async def create_task(db: AsyncSession, task_data: TaskCreate, user_id: int) -> Task:
+    deadline = naive_utc(task_data.deadline_date)
+
     task = Task(
         title=task_data.title,
         description=task_data.description,
         priority=task_data.priority,
+        deadline_date=deadline,
         user_id=user_id,
     )
 
@@ -37,8 +48,11 @@ async def update_task(
 
     if "is_done" in update_data:
         task.is_done = update_data["is_done"]
-        task.done_time = datetime.now(UTC) if task.is_done else None
+        task.done_time = naive_utc(datetime.now(UTC)) if task.is_done else None
         del update_data["is_done"]
+
+    if "deadline_date" in update_data:
+        update_data["deadline_date"] = naive_utc(update_data["deadline_date"])
 
     for field, value in update_data.items():
         setattr(task, field, value)
