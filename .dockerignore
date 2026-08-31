@@ -1,0 +1,51 @@
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# Editor / IDE / OS
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Build artifacts (regenerated in the image)
+dist
+build
+.next
+out
+.nuxt
+*.log
+
+# Dependency directories (regenerated in the image)
+node_modules
+vendor
+.venv
+venv
+__pycache__
+*.pyc
+*.pyo
+
+# Test and coverage
+coverage
+.nyc_output
+.pytest_cache
+.mypy_cache
+.ruff_cache
+
+# Local env (NEVER ship)
+.env
+.env.local
+.env.*.local
+
+# Docker artifacts
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# Docs (usually not needed in runtime images)
+README.md
+LICENSE
+CHANGELOG.md
