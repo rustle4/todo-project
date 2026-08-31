@@ -76,7 +76,7 @@ async def get_task(
     return task
 
 
-@router.delete("/{task_id}", response_model=TaskResponse)
+@router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_task(
     task_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],

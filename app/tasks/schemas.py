@@ -19,6 +19,7 @@ class TaskUpdate(BaseModel):
     title: str = Field(default=None, min_length=1, max_length=100)
     description: str | None = None
     is_done: bool | None = None
+    priority: PriorityTier | None = None
     deadline_date: datetime | None = None
 
 

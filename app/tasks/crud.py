@@ -54,6 +54,10 @@ async def update_task(
     if "deadline_date" in update_data:
         update_data["deadline_date"] = naive_utc(update_data["deadline_date"])
 
+    if "priority" in update_data:
+        task.priority = update_data["priority"]
+        del update_data["priority"]
+
     for field, value in update_data.items():
         setattr(task, field, value)
 
