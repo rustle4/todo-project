@@ -19,8 +19,6 @@ RUN uv sync --locked --no-install-project --no-dev
 COPY . ./
 RUN uv sync --locked --no-dev
 
-RUN alembic upgrade head
-
 # PRODUCTION STAGE
 FROM python:3.14.4-slim-bookworm
 
@@ -38,4 +36,4 @@ ENV PYTHONUNBUFFERED=1
 ENV PORT=8000
 
 # exec replaces shell so fastapi receives SIGTERM for clean shutdown
-CMD sh -c "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers --forwarded-allow-ips '*'"
+CMD sh -c "alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers --forwarded-allow-ips '*'"
