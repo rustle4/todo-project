@@ -49,28 +49,26 @@ Services:
 
 ## If you want to run this app without Docker
 
-- Clone the repository
+- Clone the repository:
 
 ```bash
 git clone https://github.com/your-username/todo-project.git
 cd todo-project
 ```
 
-- Install uv
+- Install uv:
 
 ```bash
 pip install uv
 ```
 
-- Install dependencies
+- Install dependencies:
 
 ```bash
 uv sync
 ```
 
-- Set up environment variables
-
-Create a .env file in the project root:
+- Set up environment variables. Create a .env file in the project root:
 
 ```env
 DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5432/todo_db
@@ -83,17 +81,18 @@ You can also use SQLite for local development:
 DATABASE_URL=sqlite+aiosqlite:///./test.db
 ```
 
-- Run migrations
+- Run migrations:
 
 ```bash
 uv run alembic upgrade head
 ```
 
-- Start the server
+- Start the server:
 
 ```bash
 uv run fastapi dev
 ```
 
 The server will be available at: http://127.0.0.1:8000
+
 Swagger UI: http://127.0.0.1:8000/docs
