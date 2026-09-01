@@ -47,7 +47,7 @@ Services:
 - **API**: http://localhost:8000
 - **PostgreSQL**: available inside the network on port 5432
 
-## If you wwant to run this app without Docker
+## If you want to run this app without Docker
 
 - Clone the repository
 
